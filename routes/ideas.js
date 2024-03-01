@@ -46,17 +46,25 @@ router.post('/', async (req, res) => {
 // Update an idea
 router.put('/:id', async (req, res) => {
     try {
-        const updatedIdea = await Idea.findByIdAndUpdate(
-            req.params.id, 
-            {
-                $set: {
-                    text: req.body.text,
-                    tag: req.body.tag
-                }
-            },
-            { new: true }
-        );
-        res.json({ success: true, data: updatedIdea });
+        const idea = await Idea.findById(req.params.id);
+        // Match the usernames
+        if(idea.username === req.body.username) {
+            const updatedIdea = await Idea.findByIdAndUpdate(
+                req.params.id, 
+                {
+                    $set: {
+                        text: req.body.text,
+                        tag: req.body.tag
+                    }
+                },
+                { new: true }
+            );
+            return res.json({ success: true, data: updatedIdea });
+        }
+
+        // Usernames don't match
+        res.status(403).json({ success: false, error: 'You are not authorized to update this resourse' });
+
     } catch (error) {
         console.log(error);
         res.status(500).json({ success: false, error: 'Something went wrong' });
@@ -66,8 +74,17 @@ router.put('/:id', async (req, res) => {
 // Delete an idea
 router.delete('/:id', async (req, res) => {
     try {
-        await Idea.findByIdAndDelete(req.params.id);
-        res.json({ success: true, data: {} });
+        const idea = await Idea.findById(req.params.id);
+
+        // Match the usernames
+        if(idea.username === req.body.username) {
+            await Idea.findByIdAndDelete(req.params.id);
+            return res.json({ success: true, data: {} });
+        }
+
+        // Usernames don't match
+        res.status(403).json({ success: false, error: 'You are not authorized to delete this resourse' });
+
     } catch (error) {
         console.log(error);
         res.status(500).json({ success: false, error: 'Something went wrong' });
